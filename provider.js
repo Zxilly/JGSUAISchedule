@@ -1,4 +1,4 @@
-function scheduleHtmlProvider() {
+function scheduleHtmlProvider(dom = document) {
     function getTime() {
         return (Date.parse(new Date().toString()) / 1000).toString()
     }
@@ -8,18 +8,26 @@ function scheduleHtmlProvider() {
         return md5(timeStamp + 'lyedu')
     }
 
-    const cookies = document.cookie.split(';')
-    let cookieMap = {}
-    for (let cookie of cookies) {
-        cookie = cookie.trim()
-        let key
-        let value
-        [key, value] = cookie.split('=')
-        cookieMap[key] = value
-    }
-    const user = JSON.parse(cookieMap['user'])
+    // const cookies = dom.cookie.split(';')
+    // let cookieMap = {}
+    // for (let cookie of cookies) {
+    //     cookie = cookie.trim()
+    //     let key
+    //     let value
+    //     [key, value] = cookie.split('=')
+    //     cookieMap[key] = value
+    // }
+
+    const cookie_xhr = new XMLHttpRequest()
+    cookie_xhr.open("POST", "https://vpn2.jgsu.edu.cn/webvpn/getcookie?domain=jw.jgsu.edu.cn", false)
+    cookie_xhr.setRequestHeader("Accept", "*/*")
+    cookie_xhr.send(null)
+
+
+    const user = JSON.parse(JSON.parse(cookie_xhr.responseText)[1]['value'])
     const name = user['userName']
     const semester = user['semester']
+
     const body = JSON.stringify({
         'semester': semester,
         'weeks': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
@@ -30,20 +38,20 @@ function scheduleHtmlProvider() {
     })
 
     const xhr = new XMLHttpRequest()
-    xhr.open("POST", `https://jw.jgsu.edu.cn/api/arrange/CourseScheduleAllQuery/studentCourseSchedule?_t=${getTime()}`, false)
+    xhr.open("POST", `https://vpn2.jgsu.edu.cn/https/webvpn7e2d802bc41e68a2b4333e8d86b0571de686e6090cc6d401c850aa69cc970112/api/arrange/CourseScheduleAllQuery/studentCourseSchedule?_t=${getTime()}`, false)
     xhr.setRequestHeader("Authorization", "Bearer undefined")
     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8")
     xhr.setRequestHeader("permission", "undefined")
     xhr.setRequestHeader("csrfToken", getCsrfToken())
     xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
     xhr.setRequestHeader("Accept", "application/json")
+    xhr.onerror = function (e) {
+        console.error(xhr.statusText);
+    };
     xhr.send(body)
 
     return xhr.responseText
 }
-
-// Get Course
-
 
 // Library code
 function md5cycle(x, k) {
